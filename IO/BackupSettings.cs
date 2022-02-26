@@ -9,6 +9,8 @@ namespace ConsoleBackup.IO
         
         public bool Verbose{get; set;}
         public bool Silent{get; set;}
+
+        public bool DailyCap{get; set;}
     }
 
 }

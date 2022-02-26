@@ -21,7 +21,8 @@ namespace ConsoleBackup.IO
         {
             if(Settings.Directories.Length == 0)
                 throw new ArgumentException("No directories found to dump");
-
+            
+            if(Settings.DailyCap) CheckDailyWrites();
             string dumpPath = File.GetAttributes(Settings.OutputPath).HasFlag(FileAttributes.Directory) 
                                 ? Path.Combine(Settings.OutputPath, $"{DateTime.Now.ToString("dd_MM_yyyy__hh_mm_ss")}.zip") : Settings.OutputPath;
             
@@ -42,6 +43,18 @@ namespace ConsoleBackup.IO
                     });
                 }
             }
+        }
+
+        private void CheckDailyWrites() 
+        {
+            List<FileInfo> writesToday = new DirectoryInfo(this.Settings.OutputPath)
+                        .GetFiles()
+                        .Where(i => i.Name.EndsWith(".zip") && (i.LastWriteTime.DayOfYear == DateTime.Now.DayOfYear && i.LastWriteTime.Year == DateTime.Now.Year))
+                        .OrderByDescending(i => i.LastWriteTime).ToList();
+            
+            if(writesToday.Count == 2)
+                File.Delete(writesToday.First().FullName);
+                
         }
 
         private void AddToArchive(ZipArchive archive, FileSystemInfo info, string prefix = "")

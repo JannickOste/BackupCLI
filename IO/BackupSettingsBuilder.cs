@@ -13,7 +13,7 @@ namespace ConsoleBackup.IO
         private BackupSettings settings = new BackupSettings()
         {
             OutputPath = Directory.GetCurrentDirectory(),
-            Filters = new string[]{"System Volume Information"}
+            Filters = new string[]{"System Volume Information", "$RECYCLE.BIN"}
         };
 
         public BackupSettings Settings {get => settings; }
@@ -35,8 +35,9 @@ namespace ConsoleBackup.IO
             foreach(string argument in sanitzedArguments)
             {
                 string prefix = (prefix = argument.Substring(2)).IndexOf(" ") == -1 ? prefix : prefix.Substring(0, prefix.IndexOf(" "));
-                string[] suffix = argument.IndexOf(" ") == -1 ? new string[0] : argument.Substring(argument.IndexOf(" ")+1).Split(", ").Select(i => i.Trim()).ToArray();
+                string[] suffix = argument.IndexOf(" ") == -1 ? new string[0] : argument.Substring(argument.IndexOf(" ")+1).Split(",").Select(i => i.Trim()).Where(i => i.Length > 0).ToArray();
                 bool set = false;
+
                 foreach(KeyValuePair<CLIArgumentAttribute, MethodInfo> pair in parsers)
                     if((set = pair.Key.Equals(prefix)))
                     {
@@ -51,6 +52,9 @@ namespace ConsoleBackup.IO
                                     pair.Value.Invoke(this, new object[]{suffix.FirstOrDefault()});
                                 else if(parameters.First().ParameterType == typeof(IEnumerable<string>))
                                     pair.Value.Invoke(this, new object[]{suffix.AsEnumerable<string>()});
+                                else if(parameters.First().ParameterType == typeof(uint))
+                                    pair.Value.Invoke(this, new object[]{uint.Parse(suffix.First())});
+
                                 break;
                             default: 
                                 Console.WriteLine("Failed to parse argument");
@@ -59,6 +63,10 @@ namespace ConsoleBackup.IO
                     }
             }
         }
+
+        [CLIArgument(aliases: new string[]{"c"}, description: "Set limit to 2 and keep first backup and current backup of the day")]
+        public void SetOutputPath() => settings.DailyCap = true;
+
 
         [CLIArgument(aliases: new string[]{"o"}, description: "Set the directory or filepath of the zip output")]
         public void SetOutputPath(string outputPath) => settings.OutputPath = outputPath;

@@ -8,6 +8,7 @@ namespace ConsoleBackup
     {
         static void Main(string[] args) 
         {
+            
             if(args.Length > 0)
             { 
                 BackupSettingsBuilder builder = new BackupSettingsBuilder();
@@ -22,7 +23,7 @@ namespace ConsoleBackup
                     ShowCommands();
                     return;
                 }
-
+                
                 BackupUtlity iOHandler = new BackupUtlity(builder.Settings);
                 try
                 {
@@ -36,6 +37,7 @@ namespace ConsoleBackup
                     iOHandler.DisplayErrors();
                 }
             } else Logger.PrintMessage("Backup CLI not implemented yet...");
+            
         }
 
         [CLIArgument(aliases: new string[]{"h", "help"}, description: "Show command log")]
