@@ -1,4 +1,6 @@
 <h1>BackupCLI - Simple yet powerful</h1>
+<p>note: this is a small project written in about half a day, there will be bugs</p>
+
 <h2>Arguments</h2>
 <pre>
 --h, --help         : Show command log
