@@ -1,15 +1,15 @@
 <h1>BackupCLI - Simple yet powerful</h1>
 <h2>Arguments</h2>
 <pre>
-[Command(s): --h, --help]     : Show command log
-[Command(s): --t, --target]   : Set target directories to backup
-[Command(s): --c, --capped]   : Set limit to 2 and keep first backup and current backup of the day
-[Command(s): --v, --verbose]  : Aggresive/verbose logging
-[Command(s): --s, --silent]   : Disable UI
-[Command(s): --sp, --saveprofile]: Save current settings to a profile for later use
-[Command(s): --f, --filters]  : Filter directory names
-[Command(s): --o, --output]   : Set the directory or filepath of the zip output
-[Command(s): --lp, --loadprofile]: Load previous used settings of a profile.
+--h, --help         : Show command log
+--t, --target       : Set target directories to backup
+--c, --capped       : Set limit to 2 and keep first backup and current backup of the day
+--v, --verbose      : Aggresive/verbose logging
+--s, --silent       : Disable UI
+--sp, --saveprofile : Save current settings to a profile for later use
+--f, --filters      : Filter directory names
+--o, --output       : Set the directory or filepath of the zip output
+--lp, --loadprofile : Load previous used settings of a profile.
 </pre>
 
 <h2>Example usages:</h2>
