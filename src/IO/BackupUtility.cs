@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 
-namespace ConsoleBackup.IO
+namespace src.ConsoleBackup.IO
 {
     public sealed class BackupUtlity
     {
@@ -13,14 +13,23 @@ namespace ConsoleBackup.IO
         public ImmutableList<string> Errors{ get => errors.ToImmutableList();}
 
         private BackupSettings Settings{get; set;}
-        public BackupUtlity(BackupSettings settings) => this.Settings = settings;
+        public BackupUtlity(BackupSettings settings) 
+        {
+            this.Settings = settings;
+            if(settings.Directories is null || settings.Directories.Length == 0)
+                this.errors.Add("No directories found to backup...");
+            
+        }
 
         public static void DumpToZip(BackupSettings settings) => new BackupUtlity(settings).DumpToZip();
 
         public void DumpToZip()
         {
-            if(Settings.Directories.Length == 0)
-                throw new ArgumentException("No directories found to dump");
+            if(Settings.Directories is null || Settings.Directories.Length == 0)
+            {
+                DisplayErrors();
+                return;
+            }
             
             if(Settings.DailyCap) CheckDailyWrites();
             string dumpPath = File.GetAttributes(Settings.OutputPath).HasFlag(FileAttributes.Directory) 
@@ -54,7 +63,6 @@ namespace ConsoleBackup.IO
             
             if(writesToday.Count == 2)
                 File.Delete(writesToday.First().FullName);
-                
         }
 
         private void AddToArchive(ZipArchive archive, FileSystemInfo info, string prefix = "")
@@ -94,7 +102,7 @@ namespace ConsoleBackup.IO
         public void DisplayErrors()
         {
             if(errors.Count == 0) return;
-            Logger.PrintMessage("Something went wrong when dumping the zipfile: ");
+            Logger.PrintMessage("Something went wrong when initializing backup utility or dumping the zip file: ");
             foreach(string line in this.Errors)
                 Logger.PrintMessage($"\t- {line}");
         }

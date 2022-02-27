@@ -4,9 +4,9 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace ConsoleBackup
+namespace src.ConsoleBackup
 {
-    public class CLIArgumentAttribute: Attribute
+    public sealed class CLIArgumentAttribute: Attribute
     {
         private string description;
         public string Description{get => description;}

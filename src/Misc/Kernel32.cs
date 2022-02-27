@@ -4,9 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace ConsoleBackup
+namespace src.ConsoleBackup
 {
-    public class Kernel32
+    public sealed class Kernel32
     {
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetConsoleWindow();

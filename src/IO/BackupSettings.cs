@@ -1,5 +1,6 @@
-namespace ConsoleBackup.IO
+namespace src.ConsoleBackup.IO
 {
+    [System.Serializable]
     public struct BackupSettings
     {
         public string OutputPath{get; set;}

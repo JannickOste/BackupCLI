@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Linq;
-using ConsoleBackup.IO;
-
-namespace ConsoleBackup
+using src.ConsoleBackup.IO;
+namespace src.ConsoleBackup
 {
     class Program
     {
         static void Main(string[] args) 
         {
-            
             if(args.Length > 0)
             { 
+                if(args.Contains("--h") || args.Contains("--help"))
+                {
+                    ShowCommands();
+                    return;
+                }
+                
                 BackupSettingsBuilder builder = new BackupSettingsBuilder();
                 Logger.PrintMessage("Starting backup based on arguments");
                 builder.SetArgs(args);
@@ -25,16 +29,24 @@ namespace ConsoleBackup
                 }
                 
                 BackupUtlity iOHandler = new BackupUtlity(builder.Settings);
-                try
-                {
-                    iOHandler.DumpToZip();
-                } catch(Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-                finally
+                if(iOHandler.Errors.Count() > 0)
                 {
                     iOHandler.DisplayErrors();
+                    return;
+                }
+                else
+                {
+                    try
+                    {
+                        iOHandler.DumpToZip();
+                    } catch(Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+                    finally
+                    {
+                        iOHandler.DisplayErrors();
+                    }
                 }
             } else Logger.PrintMessage("Backup CLI not implemented yet...");
             
