@@ -16,27 +16,27 @@
 
 <p>Backups drive C:\ to Drive B:\</p>
 <pre>
-"ConsoleBackup.exe" --t C:\ --o B:\
+"ConsoleBackup.exe" --t "C:/" --o "B:/"
 </pre>
 
 <p>Backups drive C:\ to Drive B:\ but filters out Distro and .git folders</p>
 <pre>
-"ConsoleBackup.exe" --t C:\ --o B:\ --f Distro,.git
+"ConsoleBackup.exe" --t "C:/" --o "B:/" --f Distro,.git
 </pre>
 
 <p>Backups drive C:\ to Drive B:\ and logs all coppied directories and files</p>
 <pre>
-"ConsoleBackup.exe" --t C:\ --o B:\ --v
+"ConsoleBackup.exe" --t "C:/" --o "B:/" --v
 </pre>
 
 <p>Backups drive C:\ to Drive B:\ but run with the CLI disabled</p>
 <pre>
-"ConsoleBackup.exe" --t C:\ --o B:\ --s
+"ConsoleBackup.exe" --t "C:/" --o "B:/" --s
 </pre>
 
 <p>Backups drive C:\ to Drive B:\ Filters out the directories: Distro and .git, limits the backup to the first and last backup of the day and runs silent (without console GUI) and saves it to the profile file "bybackupprofile.json" for future use</p>
 <pre>
-"ConsoleBackup.exe" --t C:\ --o B:\ --f Distro,.git --c --s --sp mybackupprofile
+"ConsoleBackup.exe" --c --s --t "F:/" --f "Distro" ".git" --o "B:/" --sp bybackupprofile
 </pre>
 
 <p>Loads all previous set arguments of mybackupprofile (above) and uses this for the compression procedure </p>
