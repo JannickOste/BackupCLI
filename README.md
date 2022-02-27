@@ -1,4 +1,4 @@
-<h1>BackupUtil - Simple yet powerful</h1>
+<h1>BackupCLI - Simple yet powerful</h1>
 <h2>Arguments</h2>
 <pre>
 [Command(s): --h, --help]     : Show command log
