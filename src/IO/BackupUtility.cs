@@ -58,11 +58,19 @@ namespace src.ConsoleBackup.IO
         {
             List<FileInfo> writesToday = new DirectoryInfo(this.Settings.OutputPath)
                         .GetFiles()
-                        .Where(i => i.Name.EndsWith(".zip") && (i.LastWriteTime.DayOfYear == DateTime.Now.DayOfYear && i.LastWriteTime.Year == DateTime.Now.Year))
+                        .Where(i => i.Name.EndsWith(".zip") && (i.LastWriteTime.DayOfYear == DateTime.Now.DayOfYear 
+                                                                && i.LastWriteTime.Year == DateTime.Now.Year))
                         .OrderByDescending(i => i.LastWriteTime).ToList();
             
-            if(writesToday.Count == 2)
-                File.Delete(writesToday.First().FullName);
+            try
+            {
+                if(writesToday.Count == 2)
+                    File.Delete(writesToday.First().FullName);
+            } catch(Exception ex)
+            {
+                this.errors.Add($"Failed to delete last made file {ex.Message}");
+            }
+
         }
 
         private void AddToArchive(ZipArchive archive, FileSystemInfo info, string prefix = "")

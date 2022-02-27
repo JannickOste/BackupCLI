@@ -1,8 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 using src.ConsoleBackup.IO;
 namespace src.ConsoleBackup
 {
@@ -41,29 +39,31 @@ namespace src.ConsoleBackup
                 }
                 else
                 {
+                    if(builder.Settings.Silent)
+                        Kernel32.ShowWindow(Kernel32.GetConsoleWindow(), Kernel32.SW_HIDE);
+                    
                     try
                     {
                         iOHandler.DumpToZip();
                     } catch(Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        Logger.PrintMessage(ex.ToString());
                     }
                     finally
                     {
                         iOHandler.DisplayErrors();
                     }
                 }
-            } else Logger.PrintMessage("Backup CLI not implemented yet...");
+            } else Logger.PrintMessage("Backup CLI UI not implemented yet...");
         }
 
         [CLIArgument(aliases: new string[]{"h", "help"}, description: "Show command log")]
         public static void ShowCommands()
         {
             Console.WriteLine("Command info:");
-            
             foreach(CLIArgumentAttribute command in CLIArgumentAttribute.GetAll().Keys)
             {
-                Console.WriteLine($"{("[Command(s): "+string.Join(", ", command.Aliases.Select(i => ($"--{i}")))+"]"), -30}: {command.Description}");
+                Console.WriteLine($"{string.Join(", ", command.Aliases.Select(i => ($"--{i}"))), -30}: {command.Description}");
             }
         }
     }

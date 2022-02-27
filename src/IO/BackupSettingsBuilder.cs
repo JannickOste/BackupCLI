@@ -44,7 +44,12 @@ namespace src.ConsoleBackup.IO
             foreach(string argument in sanitzedArguments)
             {
                 string prefix = (prefix = argument.Substring(2)).IndexOf(" ") == -1 ? prefix : prefix.Substring(0, prefix.IndexOf(" "));
-                string[] suffix = argument.IndexOf(" ") == -1 ? new string[0] : argument.Substring(argument.IndexOf(" ")+1).Split(",").Select(i => i.Trim()).Where(i => i.Length > 0).ToArray();
+               
+                string[] suffix =  argument.IndexOf(" ") == -1 
+                                            ? new string[0] 
+                                            : Regex.Matches(argument.Substring(argument.IndexOf(" ")+1), "(((?=^)|(?<=\")|(?<=,?\\s))(.*?)((?=$)|(?=\")|(?=,)))")
+                                                    .Where(i => i.Length > 0)
+                                                    .Select(i => i.Value).ToArray();
                 bool set = false;
                 foreach(KeyValuePair<CLIArgumentAttribute, MethodInfo> pair in parsers)
                     if((set = pair.Key.Equals(prefix)))
@@ -86,9 +91,8 @@ namespace src.ConsoleBackup.IO
         [CLIArgument(aliases: new string[]{"v", "verbose"}, description: "Aggresive/verbose logging")]
         public void SetVerbose() => this.settings.Verbose = true;
 
-
-        [CLIArgument(aliases: new string[]{"s", "silent"}, description: "Disable UI")]
-        public void SetSilent() => Kernel32.ShowWindow(Kernel32.GetConsoleWindow(), Kernel32.SW_HIDE);
+        [CLIArgument(aliases: new string[]{"s", "silent"}, description: "Disable CLI UI")]
+        public void SetSilent() => this.settings.Silent = true;
 
 
         [CLIArgument(aliases: new string[]{"sp", "saveprofile"}, description: "Save current settings to a profile for later use")]
@@ -111,6 +115,7 @@ namespace src.ConsoleBackup.IO
                 this.errors.Add($"Attempted to load profile \"{name}\" but profile does not exist");
                 return;
             }
+
 
             this.settings = JsonConvert.DeserializeObject<BackupSettings>(File.ReadAllText(targetFile.FullName));
         }
