@@ -1,3 +1,5 @@
+using System;
+
 namespace src.ConsoleBackup.IO
 {
     [System.Serializable]
@@ -6,12 +8,14 @@ namespace src.ConsoleBackup.IO
         public string OutputPath{get; set;}
         
         public string[] Filters{get; set;}
-        public System.IO.DirectoryInfo[] Directories{get; set;}
+        public string[] Directories{get; set;}
         
         public bool Verbose{get; set;}
         public bool Silent{get; set;}
 
         public bool DailyCap{get; set;}
+
+        [NonSerialized] public string SaveProfile;
     }
 
 }

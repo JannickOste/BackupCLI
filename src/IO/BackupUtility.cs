@@ -47,8 +47,8 @@ namespace src.ConsoleBackup.IO
                 using(ZipArchive archive = new ZipArchive(pathStream, mode == FileMode.CreateNew ? ZipArchiveMode.Create : ZipArchiveMode.Update))
                 {
                     Settings.Directories.ToList().ForEach(dir =>  {
-                        Logger.PrintMessage($"Adding root directory {dir.Name}");
-                        AddToArchive(archive, dir);
+                        Logger.PrintMessage($"Adding root directory {dir}");
+                        AddToArchive(archive, new DirectoryInfo(dir));
                     });
                 }
             }
@@ -97,7 +97,6 @@ namespace src.ConsoleBackup.IO
                 archive.CreateEntryFromFile(info.FullName, entryName);
             }
         }
-
 
         public void DisplayErrors()
         {

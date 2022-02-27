@@ -4,7 +4,9 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace src.ConsoleBackup.IO
 {
@@ -16,17 +18,24 @@ namespace src.ConsoleBackup.IO
             Filters = new string[]{"System Volume Information", "$RECYCLE.BIN"}
         };
 
-        public BackupSettings Settings {get => settings; }
+        public BackupSettings Settings {
+            get{
+                if(!(settings.SaveProfile is null) && settings.SaveProfile.Length > 0)
+                {
+                    DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(new FileInfo(Assembly.GetEntryAssembly().Location).Directory.FullName, "Profiles"));
+                    if(!targetDir.Exists) targetDir.Create();
+                    FileInfo targetFile = new FileInfo(Path.Combine(targetDir.FullName, $"{settings.SaveProfile}.json"));
+                    using(FileStream stream = File.Open(targetFile.FullName, !targetFile.Exists ? FileMode.CreateNew : FileMode.Open))
+                    {
+                        stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(settings)));
+                    }
+                }
+                return settings;
+            } 
+        }
 
         private List<string> errors = new List<string>();
         public ImmutableList<string> Errors{ get => errors.ToImmutableList();}
-
-        public static BackupSettings BuildFromProgramArgs(string[] args)
-        {
-            BackupSettingsBuilder builder = new BackupSettingsBuilder();
-            builder.SetArgs(args);
-            return builder.Settings;
-        }
 
         public void SetArgs(string[] args)
         {
@@ -70,6 +79,42 @@ namespace src.ConsoleBackup.IO
         [CLIArgument(aliases: new string[]{"o", "output"}, description: "Set the directory or filepath of the zip output")]
         public void SetOutputPath(string outputPath) => settings.OutputPath = outputPath;
 
+        [CLIArgument(aliases: new string[]{"f", "filters"}, description: "Filter directory names")]
+        public void AddFilters(IEnumerable<string> filters) => settings.Filters = filters.Concat(settings.Filters).ToArray();
+
+
+        [CLIArgument(aliases: new string[]{"v", "verbose"}, description: "Aggresive/verbose logging")]
+        public void SetVerbose() => this.settings.Verbose = true;
+
+
+        [CLIArgument(aliases: new string[]{"s", "silent"}, description: "Disable UI")]
+        public void SetSilent() => Kernel32.ShowWindow(Kernel32.GetConsoleWindow(), Kernel32.SW_HIDE);
+
+
+        [CLIArgument(aliases: new string[]{"sp", "saveprofile"}, description: "Save current settings to a profile for later use")]
+        public void SaveProfile(string name) => settings.SaveProfile = name;
+
+
+        [CLIArgument(aliases: new string[]{"lp", "loadprofile"}, description: "Load previous used settings of a profile.")]
+        public void LoadProfile(string name)
+        {
+            DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(new FileInfo(Assembly.GetEntryAssembly().Location).Directory.FullName, "Profiles"));
+            if(!targetDir.Exists) 
+            {
+                this.errors.Add("Failed to find profiles directory");
+                return;
+            }
+
+            FileInfo targetFile = new FileInfo(Path.Combine(targetDir.FullName, $"{name}.json"));
+            if(!targetFile.Exists)
+            {
+                this.errors.Add($"Attempted to load profile \"{name}\" but profile does not exist");
+                return;
+            }
+
+            this.settings = JsonConvert.DeserializeObject<BackupSettings>(File.ReadAllText(targetFile.FullName));
+        }
+        
         [CLIArgument(aliases: new string[]{"t", "target"}, description: "Set target directories to backup")]
         public void AddDirectories(IEnumerable<string> directories)
         {
@@ -96,17 +141,8 @@ namespace src.ConsoleBackup.IO
                     errors.Add($"AddDirectory -> {ex.Message}");
                 }
             
-            settings.Directories = directorieSet.ToArray();
+            settings.Directories = directorieSet.Select(i => i.FullName).ToArray();
         }
-
-        [CLIArgument(aliases: new string[]{"f", "filters"}, description: "Filter directory names")]
-        public void AddFilters(IEnumerable<string> filters) => settings.Filters = filters.Concat(settings.Filters).ToArray();
-
-        [CLIArgument(aliases: new string[]{"v", "verbose"}, description: "Aggresive/verbose logging")]
-        public void SetVerbose() => this.settings.Verbose = true;
-
-        [CLIArgument(aliases: new string[]{"s", "silent"}, description: "Disable UI")]
-        public void SetSilent() => Kernel32.ShowWindow(Kernel32.GetConsoleWindow(), Kernel32.SW_HIDE);
 
     }
 }

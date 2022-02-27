@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using Newtonsoft.Json;
 using src.ConsoleBackup.IO;
 namespace src.ConsoleBackup
 {
@@ -7,6 +10,7 @@ namespace src.ConsoleBackup
     {
         static void Main(string[] args) 
         {
+            
             if(args.Length > 0)
             { 
                 if(args.Contains("--h") || args.Contains("--help"))
@@ -14,10 +18,11 @@ namespace src.ConsoleBackup
                     ShowCommands();
                     return;
                 }
-                
+
                 BackupSettingsBuilder builder = new BackupSettingsBuilder();
                 Logger.PrintMessage("Starting backup based on arguments");
                 builder.SetArgs(args);
+
                 if(builder.Errors.Count > 0)
                 {
                     Logger.PrintMessage("Something went wrong when parsing the program arguments: ");
@@ -49,7 +54,6 @@ namespace src.ConsoleBackup
                     }
                 }
             } else Logger.PrintMessage("Backup CLI not implemented yet...");
-            
         }
 
         [CLIArgument(aliases: new string[]{"h", "help"}, description: "Show command log")]
