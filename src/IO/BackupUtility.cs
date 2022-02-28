@@ -9,44 +9,38 @@ namespace src.ConsoleBackup.IO
 {
     public sealed class BackupUtlity
     {
-        private List<string> errors = new List<string>();
-        public ImmutableList<string> Errors{ get => errors.ToImmutableList();}
+        /// <summary> Internal error stack </summary>
+        private static List<string> errors = new List<string>();
+        /// <summary> Error stack </summary>
+        public static ImmutableList<string> Errors{ get => errors.ToImmutableList();}
 
-        private BackupSettings Settings{get; set;}
-        public BackupUtlity(BackupSettings settings) 
+        /// <summary> Dump all target directories to output zip based on Program->BackupSettings</summary>
+        public static void DumpToZip()
         {
-            this.Settings = settings;
-            if(settings.Directories is null || settings.Directories.Length == 0)
-                this.errors.Add("No directories found to backup...");
+            errors.Clear();
+            if(Program.settings.Directories is null || Program.settings.Directories.Length == 0)
+                errors.Add("No target directories specified");
             
-        }
+            string dumpPath = File.GetAttributes(Program.settings.OutputPath).HasFlag(FileAttributes.Directory) 
+                                ? Path.Combine(Program.settings.OutputPath, $"{DateTime.Now.ToString("dd_MM_yyyy__hh_mm_ss")}.zip") : Program.settings.OutputPath;
+            
+            if(!dumpPath.ToLower().EndsWith(".zip"))
+                errors.Add($"Invalid output path \"{dumpPath}\"");
 
-        public static void DumpToZip(BackupSettings settings) => new BackupUtlity(settings).DumpToZip();
-
-        public void DumpToZip()
-        {
-            if(Settings.Directories is null || Settings.Directories.Length == 0)
+            if(errors.Count > 0)
             {
                 DisplayErrors();
                 return;
             }
             
-            if(Settings.DailyCap) CheckDailyWrites();
-            string dumpPath = File.GetAttributes(Settings.OutputPath).HasFlag(FileAttributes.Directory) 
-                                ? Path.Combine(Settings.OutputPath, $"{DateTime.Now.ToString("dd_MM_yyyy__hh_mm_ss")}.zip") : Settings.OutputPath;
-            
-            if(!dumpPath.ToLower().EndsWith(".zip"))
-            {
-                this.errors.Add($"Invalid output path \"{dumpPath}\"");
-                return;
-            }
+            if(Program.settings.DailyCap) CheckDailyWrites();
             FileMode mode = System.IO.File.Exists(dumpPath) ? FileMode.Open : FileMode.CreateNew;
             using(FileStream pathStream = new FileStream(dumpPath, mode))
             {
                 Logger.PrintMessage("Starting filedump...");
                 using(ZipArchive archive = new ZipArchive(pathStream, mode == FileMode.CreateNew ? ZipArchiveMode.Create : ZipArchiveMode.Update))
                 {
-                    Settings.Directories.ToList().ForEach(dir =>  {
+                    Program.settings.Directories.ToList().ForEach(dir =>  {
                         Logger.PrintMessage($"Adding root directory {dir}");
                         AddToArchive(archive, new DirectoryInfo(dir));
                     });
@@ -54,9 +48,10 @@ namespace src.ConsoleBackup.IO
             }
         }
 
-        private void CheckDailyWrites() 
+        /// <summary> Check or 2 zips have been made today, incase true delete last created zipfile.</summary>
+        private static void CheckDailyWrites() 
         {
-            List<FileInfo> writesToday = new DirectoryInfo(this.Settings.OutputPath)
+            List<FileInfo> writesToday = new DirectoryInfo(Program.settings.OutputPath)
                         .GetFiles()
                         .Where(i => i.Name.EndsWith(".zip") && (i.LastWriteTime.DayOfYear == DateTime.Now.DayOfYear 
                                                                 && i.LastWriteTime.Year == DateTime.Now.Year))
@@ -68,21 +63,25 @@ namespace src.ConsoleBackup.IO
                     File.Delete(writesToday.First().FullName);
             } catch(Exception ex)
             {
-                this.errors.Add($"Failed to delete last made file {ex.Message}");
+                errors.Add($"Failed to delete last made file {ex.Message}");
             }
 
         }
 
-        private void AddToArchive(ZipArchive archive, FileSystemInfo info, string prefix = "")
+        /// <summary> Add a file or directory to a archive </summary>
+        /// <param name="archive">The target archive</param>
+        /// <param name="info">FileInfo or DirectoryInfo</param>
+        /// <param name="prefix">ZipPath</param>
+        private static void AddToArchive(ZipArchive archive, FileSystemInfo info, string prefix = "")
         {
             string entryName = (prefix.Length > 0 ? $"{prefix}" : "")+System.Text.RegularExpressions.Regex.Replace(info.Name, $"[{string.Join("", Path.GetInvalidFileNameChars())}]", "").Replace("\\", "");
             
             if(info.GetType() == typeof(DirectoryInfo))
             {
                 DirectoryInfo dirInfo = (info as DirectoryInfo);
-                if(Settings.Filters.Contains(dirInfo.Name)) return;
+                if(Program.settings.Filters.Contains(dirInfo.Name)) return;
                 entryName += "\\";
-                if(Settings.Verbose) Logger.PrintMessage($"Created entry: {archive.CreateEntry(entryName).FullName}");
+                if(Program.settings.Verbose) Logger.PrintMessage($"Created entry: {archive.CreateEntry(entryName).FullName}");
                 foreach(FileSystemInfo subDir in (dirInfo.GetDirectories() as FileSystemInfo[]).Concat(dirInfo.GetFiles()))
                 {
                     try
@@ -91,26 +90,28 @@ namespace src.ConsoleBackup.IO
                     }
                     catch(AccessViolationException ex)
                     {
-                        this.errors.Add($"Failed to access directory, ignored exception -> {ex.Message}");
+                        errors.Add($"Failed to access directory, ignored exception -> {ex.Message}");
                     }
                     catch (Exception ex)
                     {
-                        this.errors.Add(ex.Message);
+                        errors.Add(ex.Message);
                     }
                 }
             } 
             else if(info.GetType() == typeof(FileInfo))
             {
-                if(Settings.Verbose) Logger.PrintMessage($"Adding file \"{info.Name}\" to entry: {prefix}");
+                if(Program.settings.Filters.Contains(info.Name)) return;
+                if(Program.settings.Verbose) Logger.PrintMessage($"Adding file \"{info.Name}\" to entry: {prefix}");
                 archive.CreateEntryFromFile(info.FullName, entryName);
             }
         }
 
-        public void DisplayErrors()
+        /// <summary> Display all errors if an error occured during the zip procedure or during the initialization phase. </summary>
+        public static void DisplayErrors()
         {
             if(errors.Count == 0) return;
             Logger.PrintMessage("Something went wrong when initializing backup utility or dumping the zip file: ");
-            foreach(string line in this.Errors)
+            foreach(string line in Errors)
                 Logger.PrintMessage($"\t- {line}");
         }
     }

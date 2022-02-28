@@ -9,7 +9,8 @@ namespace src.ConsoleBackup
     public sealed class Logger
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
+        public const string LogName = "DumpLog.txt";
+        
         static Logger()
         {
             Hierarchy hierarchy = (Hierarchy)LogManager.GetRepository();
@@ -19,7 +20,7 @@ namespace src.ConsoleBackup
 
             RollingFileAppender roller = new RollingFileAppender();
             roller.AppendToFile = false;
-            roller.File = $"Logs\\DumpLog.txt";
+            roller.File = $"Logs\\{LogName}";
             roller.Layout = patternLayout;
             roller.MaxSizeRollBackups = 5;
             roller.MaximumFileSize = "1GB";
