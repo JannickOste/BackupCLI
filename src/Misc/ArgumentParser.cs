@@ -39,16 +39,16 @@ namespace src.ConsoleBackup.Misc
                                                                                                                                        
 
             [ArgumentOption(Aliases = new[]{ "s", "silent"}, Description = "Disable the CLI visiblity")]
-            public static void SetSilent()  => Program.settings.Silent = true;
+            public static void SetSilent()  => Program.profile.Silent = true;
 
             [ArgumentOption(Aliases = new string[]{"f", "filters"}, Description ="Filter directory names")]
-            public static void AddFilters(IEnumerable<string> filters) => Program.settings.Filters = filters.Concat(Program.settings.Filters).ToArray();
+            public static void AddFilters(IEnumerable<string> filters) => Program.profile.Filters = filters.Concat(Program.profile.Filters).ToArray();
 
             [ArgumentOption(Aliases = new string[]{"c", "capped"}, Description =  "Set limit to 2 and keep first backup and current backup of the day")]
-            public static void SetDailyCap() => Program.settings.DailyCap = true;
+            public static void SetDailyCap() => Program.profile.DailyCap = true;
                                                                               
             [ArgumentOption(Aliases = new[]{ "v", "verbose"}, Description = "Verbose/aggresive logging")]
-            public static void SetVerbose()  => Program.settings.Verbose = true;
+            public static void SetVerbose()  => Program.profile.Verbose = true;
 
 
             [ArgumentOption(Aliases = new[]{ "o", "output"}, Description = "Verbose/aggresive logging")]
@@ -58,7 +58,7 @@ namespace src.ConsoleBackup.Misc
                 {
                     FileAttributes fileAttr = File.GetAttributes(path.First());
 
-                    Program.settings.OutputPath = path.First();
+                    Program.profile.OutputPath = path.First();
                 }
             } 
                             
@@ -67,13 +67,13 @@ namespace src.ConsoleBackup.Misc
             {
                 if(name.Length == 1)
                 {
-                    Program.settings.SaveProfile = name[0];
+                    Program.profile.name = name[0];
                     exitEvent = () => {
                         DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(new FileInfo(Assembly.GetEntryAssembly().Location).Directory.FullName, "Profiles"));
                         if(!targetDir.Exists) targetDir.Create();
-                        FileInfo targetFile = new FileInfo(Path.Combine(targetDir.FullName, $"{Program.settings.SaveProfile}.json"));
+                        FileInfo targetFile = new FileInfo(Path.Combine(targetDir.FullName, $"{Program.profile.name}.json"));
                         using(FileStream stream = File.Open(targetFile.FullName, !targetFile.Exists ? FileMode.CreateNew : FileMode.Open))
-                            stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(Program.settings)));
+                            stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(Program.profile)));
                     };
                 }
             }
@@ -92,7 +92,7 @@ namespace src.ConsoleBackup.Misc
                     if(!targetFile.Exists)
                         throw new FileNotFoundException($"Attempted to load profile \"{name[0]}\" but profile does not exist");
                         
-                    Program.settings = JsonConvert.DeserializeObject<BackupSettings>(File.ReadAllText(targetFile.FullName));
+                    Program.profile = JsonConvert.DeserializeObject<BackupProfile>(File.ReadAllText(targetFile.FullName));
                 }
             }
             
@@ -121,7 +121,7 @@ namespace src.ConsoleBackup.Misc
                         errors.Add($"AddDirectory -> {ex.Message}");
                     }
                 
-                Program.settings.Directories = directorieSet.Select(i => i.FullName).ToArray();
+                Program.profile.Directories = directorieSet.Select(i => i.FullName).ToArray();
             }
 
 
@@ -155,6 +155,7 @@ namespace src.ConsoleBackup.Misc
                                                         .Where(i => i.Length > 0)
                                                         .Select(i => i.Value.Trim()).ToArray();
                 
+                Console.WriteLine(string.Join("\n", Regex.Matches(arg.Substring(arg.IndexOf(" ")+1), "((\"+|^)(.*?)(\"+|,+))").Select(i => i.Value)));
                 KeyValuePair<ArgumentOptionAttribute, MethodInfo> match = options.Where(i => i.Key.Equals(prefix)).FirstOrDefault();
                 if(!(match.Key is null) && !(match.Value is null))
                 {
